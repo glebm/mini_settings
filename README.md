@@ -32,5 +32,3 @@ meson setup builddir --buildtype=release \
     If a commented key exists, will uncomment it and set the value in-place
      instead of appending a new key
     By default, reads from /dev/stdin and writes to /dev/stdout;
-
-The default config file location for the binaries can be changed via the `DEFAULT_CONFIG_PATH` define.
