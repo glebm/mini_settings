@@ -28,7 +28,7 @@ static const char kUsage[] =
     "If a commented key exists, will uncomment it and set the value in-place"
     " instead of appending a new key\n\n"
     "By default, reads from " DEFAULT_CONFIG_IN_PATH
-    " writes to " DEFAULT_CONFIG_OUT_PATH "\n";
+    " and writes to " DEFAULT_CONFIG_OUT_PATH "\n";
 
 int main(int argc, char *argv[]) {
   if (argc < 2 || strcmp(argv[1], "--help") == 0) {

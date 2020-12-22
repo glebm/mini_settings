@@ -4,6 +4,19 @@ A fast C implementation of reading from and writing to a simple key-value text c
 
 Provides 2 binaries to read/write a simple key-value config format.
 
+## Build options
+
+See `meson_options.txt`
+
+Example:
+
+```sh
+meson setup builddir --buildtype=release \
+  -Ddefault_config_path=/tmp/my.conf \
+  -Dget_exe_name=my-get \
+  -Dset_exe_name=my-set
+```
+
 ### mini-settings-get
 
     Usage: mini-settings-get [-f CONFIG_FILE] <KEY> [KEY]...
