@@ -35,7 +35,7 @@ static struct mini_settings_set_result_t mini_settings_set_sized(
   struct mini_settings_set_result_t result;
   memset(&result, 0, sizeof(result));
 
-  bool *written = malloc(kvs_size / 2 * sizeof(bool));
+  bool *written = calloc(kvs_size / 2, sizeof(bool));
 
   struct mini_settings_stringbuf out;
   mini_settings_stringbuf_init(&out, config_contents_size);

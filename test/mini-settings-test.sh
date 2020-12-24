@@ -21,9 +21,9 @@ expect_key() {
   fi
 }
 
-# Arguments: <key> <value>
+# Arguments: <key> <value> ...
 write_key() {
-  "$SET_BIN" -f "$CONF" "$1" "$2" || add_error "write failed"
+  "$SET_BIN" -f "$CONF" "$@" || add_error "write failed"
 }
 
 cp "$ORIG_CONF" "$CONF"
@@ -48,6 +48,11 @@ expect_key splash.screen.enabled 1
 # Write an entirely new key
 write_key totally.new.key 10
 expect_key totally.new.key 10
+
+# Write multiple keys
+write_key multiple1 1 multiple2 2
+expect_key multiple1 1
+expect_key multiple2 2
 
 if [ -n "$ERRORS" ]; then
   echo >&2 "$ERRORS"
