@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,8 +65,17 @@ int main(int argc, char *argv[]) {
 
   char *config_contents;
   size_t config_contents_size;
-  mini_settings_read_file(config_in_path, &config_contents,
-                          &config_contents_size);
+
+  if (!mini_settings_try_read_file(config_in_path, &config_contents,
+                                   &config_contents_size)) {
+    if (errno == ENOENT) {
+      config_contents = NULL;
+      config_contents_size = 0;
+    } else {
+      perror(config_in_path);
+      return EXIT_FAILURE;
+    }
+  }
 
   struct mini_settings_set_result_t result =
       mini_settings_set(config_contents, config_contents_size, kvs, kvs_size);
