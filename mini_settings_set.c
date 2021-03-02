@@ -41,6 +41,8 @@ static struct mini_settings_set_result_t mini_settings_set_sized(
   mini_settings_stringbuf_init(&out, config_contents_size);
 
   const char *eof = config_contents + config_contents_size;
+  config_contents = skip_utf8_bom(config_contents, eof);
+
   const char *line_end = config_contents - 1;
   size_t line_num = 0;
   while (line_end < eof) {

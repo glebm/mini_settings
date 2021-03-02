@@ -19,4 +19,13 @@ static inline const char *skip_trailing_whitespace(const char *begin,
   return end;
 }
 
+// Skips UTF-8 byte order mark.
+// See https://en.wikipedia.org/wiki/Byte_order_mark
+static inline const char *skip_utf8_bom(const char *begin, const char *end) {
+  if (end - begin >= 3 && begin[0] == '\xEF' && begin[1] == '\xBB' &&
+      begin[2] == '\xBF')
+    return begin + 3;
+  return begin;
+}
+
 #endif  // _MINI_SETTINGS_ASCII_H_

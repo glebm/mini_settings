@@ -13,6 +13,8 @@ static struct mini_settings_get_result_t mini_settings_get_one(
   memset(&result, 0, sizeof(result));
 
   const char *eof = config_contents + config_size;
+  config_contents = skip_utf8_bom(config_contents, eof);
+
   const char *line_end = config_contents - 1;
   size_t line_num = 0;
   while (line_end < eof) {
