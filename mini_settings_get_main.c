@@ -21,19 +21,26 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, kUsage, argv[0]);
     return EXIT_FAILURE;
   }
-  size_t num_keys = argc - 1;
-  const char **keys = (const char **)argv + 1;
   const char *config_path = DEFAULT_CONFIG_PATH;
-  if (argv[1][0] == '-' && argv[1][1] == 'f') {
-    if (argc < 3) {
-      const char message[] = "-f requires an argument\n";
-      fwrite(message, sizeof(char), sizeof(message), stderr);
+  unsigned i = 1;
+  for (; i < argc && argv[i][0] == '-'; ++i) {
+    if (strcmp(argv[i], "-f") == 0) {
+      if (i + 1 >= argc) {
+        const char message[] = "-f requires an argument\n";
+        fwrite(message, sizeof(char), sizeof(message), stderr);
+        return EXIT_FAILURE;
+      }
+      config_path = argv[++i];
+    } else if (strcmp(argv[i], "--") == 0) {
+      ++i;
+      break;
+    } else {
+      fprintf(stderr, "unknown argument: %s\n", argv[i]);
       return EXIT_FAILURE;
     }
-    config_path = argv[2];
-    keys += 2;
-    num_keys -= 2;
   }
+  const size_t num_keys = argc - i;
+  const char **keys = (const char **)argv + i;
 
   if (num_keys == 0) {
     const char message[] = "at least 1 key argument is required\n";
@@ -50,6 +57,7 @@ int main(int argc, char *argv[]) {
   if (result.error != NULL) {
     fwrite(result.error, sizeof(char), result.error_size, stderr);
     free(result.error);
+    fputc('\n', stderr);
     goto get_failed;
   } else if (result.value == NULL) {
     // Key not found.

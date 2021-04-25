@@ -31,7 +31,7 @@ static void write_kv(struct mini_settings_stringbuf *out, const char *key,
 
 static struct mini_settings_set_result_t mini_settings_set_sized(
     const char *config_contents, size_t config_contents_size, const char *kvs[],
-    size_t kvs_size, const size_t kvs_sizes[]) {
+    size_t kvs_size, const size_t kvs_sizes[], bool validate) {
   struct mini_settings_set_result_t result;
   memset(&result, 0, sizeof(result));
 
@@ -74,7 +74,7 @@ static struct mini_settings_set_result_t mini_settings_set_sized(
 
     const char *eq_pos = memchr(key_begin, '=', line_end - key_begin);
     if (eq_pos == NULL) {
-      if (commented) {
+      if (commented || !validate) {
         mini_settings_stringbuf_append_line(&out, line_begin,
                                             line_end - line_begin);
         continue;
@@ -116,12 +116,14 @@ static struct mini_settings_set_result_t mini_settings_set_sized(
 struct mini_settings_set_result_t mini_settings_set(const char *config_contents,
                                                     size_t config_contents_size,
                                                     const char *kvs[],
-                                                    size_t kvs_size) {
+                                                    size_t kvs_size,
+                                                    bool validate) {
   size_t *kvs_sizes = malloc(sizeof(size_t) * kvs_size);
   for (size_t i = 0; i < kvs_size; ++i) kvs_sizes[i] = strlen(kvs[i]);
 
-  struct mini_settings_set_result_t result = mini_settings_set_sized(
-      config_contents, config_contents_size, kvs, kvs_size, kvs_sizes);
+  struct mini_settings_set_result_t result =
+      mini_settings_set_sized(config_contents, config_contents_size, kvs,
+                              kvs_size, kvs_sizes, validate);
 
   free(kvs_sizes);
   return result;
