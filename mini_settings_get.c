@@ -8,7 +8,7 @@
 
 static struct mini_settings_get_result_t mini_settings_get_one(
     const char *config_contents, size_t config_size, const char *key,
-    size_t key_size) {
+    size_t key_size, bool validate) {
   struct mini_settings_get_result_t result;
   memset(&result, 0, sizeof(result));
 
@@ -28,6 +28,7 @@ static struct mini_settings_get_result_t mini_settings_get_one(
 
     const char *eq_pos = memchr(key_begin, '=', line_end - key_begin);
     if (eq_pos == NULL) {
+      if (!validate) continue;
       const size_t err_size = 128 + (line_end - line_begin);
       result.error = malloc(err_size);
       result.error_size =
@@ -58,16 +59,17 @@ static struct mini_settings_get_result_t mini_settings_get_one(
 struct mini_settings_get_result_t mini_settings_get(const char *config_contents,
                                                     size_t config_size,
                                                     const char *keys[],
-                                                    size_t keys_size) {
+                                                    size_t keys_size,
+                                                    bool validate) {
+  struct mini_settings_get_result_t result;
+  memset(&result, 0, sizeof(result));
   for (size_t i = 0; i < keys_size; ++i) {
     const char *key = keys[i];
     const size_t key_size = strlen(keys[i]);
-    struct mini_settings_get_result_t result =
-        mini_settings_get_one(config_contents, config_size, key, key_size);
-    if (result.value != NULL) return result;
+    result = mini_settings_get_one(config_contents, config_size, key, key_size,
+                                   validate);
+    if (result.value != NULL || result.error != NULL) return result;
   }
 
-  struct mini_settings_get_result_t result;
-  memset(&result, 0, sizeof(result));
   return result;
 }

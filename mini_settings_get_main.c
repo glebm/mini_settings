@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,10 +11,12 @@
 #endif
 
 static const char kUsage[] =
-    "Usage: %s [-f CONFIG_FILE] <KEY> [KEY]...\n\n"
+    "Usage: %s [-f CONFIG_FILE] [--validate] <KEY> [KEY]...\n\n"
     "Prints the value of the key or returns a non-zero exit status.\n"
     "If multiple keys are given, tries them in order until it finds a key"
     " that exists.\n\n"
+    "If --validate is passed, checks that the file is in the key=value"
+    " format.\n\n"
     "By default, reads from " DEFAULT_CONFIG_PATH "\n";
 
 int main(int argc, char *argv[]) {
@@ -21,6 +24,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, kUsage, argv[0]);
     return EXIT_FAILURE;
   }
+  bool validate = false;
   const char *config_path = DEFAULT_CONFIG_PATH;
   unsigned i = 1;
   for (; i < argc && argv[i][0] == '-'; ++i) {
@@ -31,6 +35,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
       config_path = argv[++i];
+    } else if (strcmp(argv[i], "--validate") == 0) {
+      validate = true;
     } else if (strcmp(argv[i], "--") == 0) {
       ++i;
       break;
@@ -52,8 +58,8 @@ int main(int argc, char *argv[]) {
   size_t config_contents_size;
   mini_settings_read_file(config_path, &config_contents, &config_contents_size);
 
-  struct mini_settings_get_result_t result =
-      mini_settings_get(config_contents, config_contents_size, keys, num_keys);
+  struct mini_settings_get_result_t result = mini_settings_get(
+      config_contents, config_contents_size, keys, num_keys, validate);
   if (result.error != NULL) {
     fwrite(result.error, sizeof(char), result.error_size, stderr);
     free(result.error);
