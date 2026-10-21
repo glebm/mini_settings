@@ -7,6 +7,10 @@
 #include "mini_settings_read_file.h"
 #include "mini_settings_set.h"
 
+#if MINI_SETTINGS_CONCURRENCY
+#include "mini_settings_locked_file.h"
+#endif
+
 #ifndef DEFAULT_CONFIG_IN_PATH
 #ifdef DEFAULT_CONFIG_PATH
 #define DEFAULT_CONFIG_IN_PATH DEFAULT_CONFIG_PATH
@@ -79,7 +83,27 @@ int main(int argc, char *argv[]) {
   char *config_contents;
   size_t config_contents_size;
 
-  if (!mini_settings_try_read_file(config_in_path, &config_contents,
+#if MINI_SETTINGS_CONCURRENCY
+  // Serialize concurrent writers and replace the file atomically so that
+  // readers never see a partially written file.
+  struct mini_settings_locked_file locked_file = {.fd = -1};
+  const bool use_locked_file =
+      strcmp(config_in_path, config_out_path) == 0 &&
+      mini_settings_is_replaceable_file(config_out_path);
+  if (use_locked_file) {
+    if (!mini_settings_lock_file(config_out_path, &locked_file) ||
+        !mini_settings_read_locked_file(&locked_file, &config_contents,
+                                        &config_contents_size)) {
+      perror(config_out_path);
+      if (locked_file.fd >= 0) mini_settings_unlock_file(&locked_file);
+      return EXIT_FAILURE;
+    }
+  }
+#else
+  const bool use_locked_file = false;
+#endif
+  if (!use_locked_file &&
+      !mini_settings_try_read_file(config_in_path, &config_contents,
                                    &config_contents_size)) {
     if (errno == ENOENT) {
       config_contents = NULL;
@@ -99,6 +123,20 @@ int main(int argc, char *argv[]) {
     goto set_failed;
   }
 
+#if MINI_SETTINGS_CONCURRENCY
+  if (use_locked_file) {
+    if (!mini_settings_replace_locked_file(&locked_file, result.contents,
+                                           result.contents_size)) {
+      perror(config_out_path);
+      goto set_failed;
+    }
+    mini_settings_unlock_file(&locked_file);
+    free(result.contents);
+    free(config_contents);
+    return EXIT_SUCCESS;
+  }
+#endif
+
   FILE *config_file = fopen(config_out_path, "w");
   if (config_file == NULL) {
     perror(config_out_path);
@@ -116,6 +154,9 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 
 set_failed:
+#if MINI_SETTINGS_CONCURRENCY
+  if (use_locked_file) mini_settings_unlock_file(&locked_file);
+#endif
   free(result.contents);
   free(config_contents);
   return EXIT_FAILURE;

@@ -1,3 +1,4 @@
 option('default_config_path', type: 'string', description: 'Default config path')
 option('get_exe_name', type: 'string', value: 'mini-settings-get')
 option('set_exe_name', type: 'string', value: 'mini-settings-set')
+option('concurrency', type: 'boolean', value: true, description: 'Make concurrent set and get calls safe by locking the config file and replacing it atomically')
