@@ -12,6 +12,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "mini_settings_read_file.h"
+
 bool mini_settings_is_replaceable_file(const char* path) {
   struct stat st;
   if (stat(path, &st) != 0) return errno == ENOENT;
@@ -56,41 +58,7 @@ fail:;
 
 bool mini_settings_read_locked_file(struct mini_settings_locked_file* file,
                                     char** out_data, size_t* out_size) {
-  struct stat st;
-  if (fstat(file->fd, &st) != 0) return false;
-
-  // The file cannot change while we hold the lock, but read until EOF anyway.
-  size_t capacity = st.st_size + 1;
-  size_t size = 0;
-  char* data = malloc(capacity);
-  if (data == NULL) return false;
-  for (;;) {
-    if (size + 1 == capacity) {
-      capacity *= 2;
-      char* new_data = realloc(data, capacity);
-      if (new_data == NULL) {
-        free(data);
-        errno = ENOMEM;
-        return false;
-      }
-      data = new_data;
-    }
-    const ssize_t num_read = read(file->fd, data + size, capacity - size - 1);
-    if (num_read == 0) break;
-    if (num_read < 0) {
-      if (errno == EINTR) continue;
-      const int saved_errno = errno;
-      free(data);
-      errno = saved_errno;
-      return false;
-    }
-    size += num_read;
-  }
-  data[size] = 0;
-
-  *out_data = data;
-  *out_size = size;
-  return true;
+  return mini_settings_try_read_fd(file->fd, out_data, out_size);
 }
 
 static bool write_all(int fd, const char* data, size_t size) {

@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// Reads from the file descriptor until EOF. Works with pipes.
+// On error, sets errno.
+bool mini_settings_try_read_fd(int fd, char** out_data, size_t* out_size);
+
 // Reads the file. On error, sets errno.
 bool mini_settings_try_read_file(const char *fname, char **out_data,
                                  size_t *out_size);
