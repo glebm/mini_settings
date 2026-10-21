@@ -54,6 +54,13 @@ write_key multiple1 1 multiple2 2
 expect_key multiple1 1
 expect_key multiple2 2
 
+# Read from a pipe
+ACTUAL="$(printf 'piped=1\n' | "$GET_BIN" piped)"
+[ "$ACTUAL" = 1 ] || add_error "Expected piped get to print 1, got $ACTUAL"
+ACTUAL="$(printf 'piped=1\n' | "$SET_BIN" other 2)"
+[ "$ACTUAL" = "piped=1
+other=2" ] || add_error "Unexpected piped set output: $ACTUAL"
+
 # Preserve file mode
 chmod 640 "$CONF"
 write_key mode.test 1
