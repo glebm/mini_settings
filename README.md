@@ -17,6 +17,25 @@ meson setup builddir --buildtype=release \
   -Dset_exe_name=my-set
 ```
 
+### Concurrency
+
+With `-Dconcurrency=true` (the default), `mini-settings-set -f CONFIG_FILE`
+is safe to run concurrently with other `mini-settings-set` and
+`mini-settings-get` calls on the same file:
+
+* Writers take an exclusive `flock(2)` on the config file for the whole
+  read-modify-write, so concurrent updates are never lost.
+* The new contents are written to a temporary file in the same directory,
+  `fsync`ed, and `rename`d over the config file, so readers always see either
+  the old or the new file in full, and a crash never leaves a partial file.
+  The file mode and (where permitted) owner are preserved, and symlinks are
+  followed.
+
+This requires write access to the config file's directory.
+`flock(2)` may not be reliable on some network filesystems.
+
+Pass `-Dconcurrency=false` to write the file in place instead.
+
 ### mini-settings-get
 
     Usage: mini-settings-get [-f CONFIG_FILE] <KEY> [KEY]...
